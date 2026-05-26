@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <title>Login - ZYPHER</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --green:#2e7d32;
+      --green-600:#256c29;
+      --bg:#f6f7fb;
+    }
+    body {
+      margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      background:var(--bg); display:flex; justify-content:center; align-items:center;
+      height:100vh;
+    }
+    .container {
+      display:flex; width:100%; max-width:880px; height:520px;
+      background:#fff; border-radius:16px; overflow:hidden;
+      box-shadow:0 10px 30px rgba(0,0,0,.12);
+    }
+    /* lado esquerdo: login */
+    .login-box {
+      flex:1; padding:40px; display:flex; flex-direction:column; justify-content:center; align-items:center;
+    }
+    .login-box img {
+      height:60px; margin-bottom:20px;
+    }
+    .login-box h2 {
+      font-size:26px; font-weight:800; margin-bottom:20px;
+      color:var(--green); text-align:center;
+    }
+    .input {
+      width:100%; padding:12px; margin:8px 0;
+      border:1px solid #ddd; border-radius:10px; font-size:15px;
+    }
+    .btn {
+      width:100%; padding:12px; border:none; border-radius:10px; cursor:pointer;
+      background:var(--green); color:#fff; font-weight:600; margin-top:10px;
+      transition:0.2s;
+    }
+    .btn:hover {background:var(--green-600);}
+
+    /* lado direito: boas vindas */
+    .welcome-box {
+      flex:1; background:linear-gradient(135deg,var(--green),#1b5e20);
+      color:#fff; display:flex; flex-direction:column; justify-content:center; align-items:center;
+      text-align:center; padding:40px;
+    }
+    .welcome-box h3 {
+      font-size:24px; font-weight:800; margin-bottom:16px;
+    }
+    .welcome-box p {
+      font-size:15px; line-height:1.5; max-width:300px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Login -->
+    <div class="login-box">
+      <h2>Entrar</h2>
+      <form method="POST" action="/login" style="width:100%; max-width:280px;">
+        <input class="input" type="text" name="username" placeholder="Usuário" required>
+        <input class="input" type="password" name="password" placeholder="Senha" required>
+        <button class="btn" type="submit">Login</button>
+      </form>
+    </div>
+
+    <!-- Welcome -->
+    <div class="welcome-box">
+      <img src="/static/LOGO-2.png" alt="Logo" style="height: 250px; margin-bottom:20px;">
+      <h3>Bem-vindo de volta!</h3>
+      <p>Estamos felizes em ter você novamente. Continue acompanhando e gerenciando suas impressoras com facilidade.</p>
+    </div>
+  </div>
+</body>
+</html>

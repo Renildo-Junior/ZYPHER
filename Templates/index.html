@@ -1,0 +1,680 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<title>ZYPHER</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- Favicon logo -->
+<link rel="icon" type="image/png" href="/static/LOGO-1.png">
+
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--green);
+  color: #fff;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center; /* centraliza conteúdo */
+  height: 70px; /* altura fixa para padronizar */
+}
+
+.header-center img {
+  height: 145px;      /* aumenta a altura */
+  width: auto;       /* mantém proporção */
+  max-width: 260px;  /* evita quebrar */
+  display: block;
+  margin: 0 auto;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+/* efeito hover */
+.header-center img:hover {
+  transform: scale(1.05); /* cresce levemente */
+  opacity: 0.9;           /* dá um efeito de suavização */
+}
+
+  :root{
+    --green:#2e7d32;
+    --green-600:#256c29;
+    --bg:#f6f7fb;
+    --card:#ffffff;
+    --text:#1b1f24;
+    --muted:#5f6b7a;
+    --red:#d93025;
+    --amber:#b7791f;
+    --ring:rgba(0,0,0,.06);
+  }
+  .dark{
+    --bg:#0f1419;
+    --card:#131a21;
+    --text:#e8eef5;
+    --muted:#9fb1c7;
+    --ring:rgba(255,255,255,.04);
+  }
+  *{box-sizing:border-box}
+  body{margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial; background:var(--bg); color:var(--text)}
+  header{position:sticky; top:0; z-index:20; background:var(--green); color:#fff; padding:14px 16px; display:flex; align-items:center; justify-content:center}
+  header .title{font-weight:800; letter-spacing:.5px}
+  .top-actions{position:absolute; right:16px; top:10px; display:flex; gap:10px; align-items:center}
+  .iconbtn{width:38px; height:38px; border-radius:10px; display:grid; place-items:center; background:rgba(255,255,255,.15); cursor:pointer; border:1px solid rgba(255,255,255,.18)}
+  .iconbtn:hover{background:rgba(255,255,255,.25)}
+  .iconbtn svg{width:18px; height:18px; fill:#fff}
+  main{padding:16px; max-width:1480px; margin:0 auto}
+  .kpis{display:flex; gap:12px; justify-content:center; margin-bottom:10px}
+  .kpi{min-width:110px; background:var(--card); border-radius:14px; padding:16px; text-align:center; box-shadow:0 6px 16px var(--ring); border:1px solid var(--ring)}
+  .kpi .n{font-size:26px; font-weight:800}
+  .kpi .lbl{font-size:12px; color:var(--muted)}
+  .toolbar{display:flex; gap:10px; align-items:center; justify-content:center; margin:10px auto 18px; max-width:900px}
+  .search{flex:1; background:var(--card); border:1px solid var(--ring); border-radius:12px; padding:10px 12px; outline:none; color:var(--text)}
+  .btn{border:none; background:var(--card); color:var(--text); border:1px solid var(--ring); padding:10px 14px; border-radius:12px; cursor:pointer}
+  .btn.active{background:var(--green); color:#fff; border-color:var(--green)}
+  .btn.active-offline{background:var(--red); color:#fff; border-color:var(--red)}
+  .btn.active-online{background:var(--green); color:#fff; border-color:var(--green)}
+  .grid-wrapper{position:relative}
+  .grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(260px,1fr)); gap:14px; padding-bottom:30px}
+  .card{background:var(--card); border:1px solid var(--ring); border-radius:16px; padding:16px; box-shadow:0 6px 16px var(--ring); position:relative; text-align:center}
+  .zebra{width:58px; margin:6px auto 12px; opacity:.98}
+  .status{font-weight:700; font-size:13px; margin-bottom:6px}
+  .status .on{color:var(--green)}
+  .status .off{color:var(--red)}
+  .name{font-weight:800; text-align:center; line-height:1.2; margin:4px 0 6px; cursor:pointer}
+  .aviso{font-size:13px; text-align:center; margin-top:8px; font-weight:700}
+  .muted{color:var(--muted)}
+  /* sidebar */
+  .sidebar-toggle{position:fixed; left:10px; top:10px; z-index:70}
+  .sidebar{
+    position:fixed; left:10px; top:10px; bottom:10px; width:240px; background:var(--green); color:#fff;
+    border-radius:18px; box-shadow:0 10px 30px rgba(0,0,0,.25); transform:translateX(-270px); transition:.25s ease; padding:12px; z-index:60
+  }
+  .sidebar.show{transform:none}
+  .side-head{display:flex; justify-content:space-between; align-items:center; padding:6px 8px 10px; border-bottom:1px solid rgba(255,255,255,.15)}
+  .side-title{font-weight:800}
+  .side-btn{width:100%; text-align:left; padding:10px 12px; margin:10px 0; background:rgba(255,255,255,.06); border-radius:12px; color:#fff; cursor:pointer; border:1px solid rgba(255,255,255,.08)}
+  .side-btn.inline{display:flex; align-items:center; gap:10px}
+  .side-list{display:none; margin-top:8px}
+  .side-list.show{display:block}
+  .side-item{width:100%; padding:10px 12px; border-radius:10px; background:rgba(0,0,0,.12); border:1px solid rgba(255,255,255,.08); color:#fff; margin:6px 0; cursor:pointer}
+  .side-item:hover{background:rgba(0,0,0,.18)}
+  .side-foot{position:absolute; bottom:12px; left:12px; right:12px; display:grid; gap:8px}
+  /* dropdown user */
+  .dropdown{position:absolute; display:none; background:var(--card); color:var(--text); border:1px solid var(--ring); border-radius:12px; padding:8px; min-width:220px; box-shadow:0 10px 20px rgba(0,0,0,.25)}
+  .dropdown.show{display:block}
+  .drop-item{padding:8px 10px; border-radius:10px}
+  .drop-item.link{cursor:pointer}
+  .drop-item.link:hover{background:rgba(0,0,0,.06)}
+  /* modal */
+  .modal-back{position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center}
+  .modal{background:var(--card); color:var(--text); border-radius:16px; width:min(560px,92vw); border:1px solid var(--ring); box-shadow:0 8px 24px rgba(0,0,0,.25)}
+  .modal .hd{padding:14px 16px; border-bottom:1px solid var(--ring); font-weight:800; color:var(--green)}
+  .modal .bd{padding:14px 16px; max-height:60vh; overflow:auto}
+  .modal .ft{padding:12px 16px; display:flex; gap:8px; justify-content:flex-end; border-top:1px solid var(--ring)}
+  .btn-green{background:var(--green); color:#fff; border-color:var(--green)}
+  .btn-red{background:var(--red); color:#fff; border-color:var(--red)}
+  .btn-ghost{background:transparent}
+  /* small loading on grid */
+  .grid-loading{
+    position:absolute; inset:0; display:none; place-items:center; background:rgba(255,255,255,.85); z-index:55; border-radius:12px;
+  }
+  .grid-loading .inner{display:grid; gap:10px; justify-items:center}
+  .grid-loading .msg{font-weight:700}
+  .dark .grid-loading{background:rgba(0,0,0,.6)}
+  .spinner svg{width:64px; height:64px; animation:spin 1.1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  footer{padding:14px 10px;text-align:center;font-size:13px;color:var(--muted)}
+  .small{font-size:12px}
+
+  /* melhorias dark mode pedidas (#8) */
+  .dark .modal{border:1px solid var(--green)}
+  .dark .search{border:1px solid var(--green)}
+
+  /* Logo de fundo no sidebar */
+.sidebar::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 180px;      /* tamanho da logo */
+  height: 180px;     /* tamanho da logo */
+  background: url("/static/LOGO-2.png") no-repeat center;
+  background-size: contain;
+  opacity: 0.15;     /* transparência */
+  pointer-events: none; /* não atrapalha cliques */
+}
+
+</style>
+</head>
+<body>
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <div class="side-head">
+      <div class="side-title">Menu</div>
+      <button class="iconbtn" id="closeSidebar" title="Fechar" style="background:transparent;border:0">
+        <svg viewBox="0 0 24 24" width="18" height="18"><path fill="#fff" d="M18.3 5.71 12 12.01l6.3 6.29-1.41 1.41L10.59 13.4 4.3 19.71 2.89 18.3 9.18 12 2.89 5.71 4.3 4.3l6.29 6.3 6.29-6.3 1.42 1.41Z"/></svg>
+      </button>
+    </div>
+
+    <button class="side-btn inline" id="btnBlocos">
+      <svg width="18" height="18" viewBox="0 0 24 24" style="fill:#fff"><path d="M21 16L12 21L3 16V14L12 19L21 14V16ZM21 11L12 16L3 11V9L12 14L21 9V11ZM12 3L21 8L12 13L3 8L12 3Z"/></svg>
+      Blocos
+    </button>
+    <div class="side-list" id="listaBlocos"></div>
+
+    <button class="side-btn inline" id="btnAlertas">
+      <svg width="18" height="18" viewBox="0 0 640 640"><path d="M320 64C334.7 64 348.2 72.1 355.2 85L571.2 485C577.9 497.4 577.6 512.4 570.4 524.5C563.2 536.6 550.1 544 536 544L104 544C89.9 544 76.9 536.6 69.6 524.5C62.3 512.4 62.1 497.4 68.8 485L284.8 85C291.8 72.1 305.3 64 320 64zM320 232C306.7 232 296 242.7 296 256L296 368C296 381.3 306.7 392 320 392C333.3 392 344 381.3 344 368L344 256C344 242.7 333.3 232 320 232zM346.7 448C347.3 438.1 342.4 428.7 333.9 423.5C325.4 418.4 314.7 418.4 306.2 423.5C297.7 428.7 292.8 438.1 293.4 448C292.8 457.9 297.7 467.3 306.2 472.5C314.7 477.6 325.4 477.6 333.9 472.5C342.4 467.3 347.3 457.9 346.7 448z"/></svg>
+      Alertas
+    </button>
+
+    <div class="side-foot">
+      <button class="side-btn inline" id="btnLogout">
+        <svg width="18" height="18" viewBox="0 0 640 640"><path fill="#fff" d="M569 337C578.4 327.6 578.4 312.4 569 303.1L425 159C418.1 152.1 407.8 150.1 398.8 153.8C389.8 157.5 384 166.3 384 176L384 256L272 256C245.5 256 224 277.5 224 304L224 336C224 362.5 245.5 384 272 384L384 384L384 464C384 473.7 389.8 482.5 398.8 486.2C407.8 489.9 418.1 487.9 425 481L569 337zM224 160C241.7 160 256 145.7 256 128C256 110.3 241.7 96 224 96L160 96C107 96 64 139 64 192L64 448C64 501 107 544 160 544L224 544C241.7 544 256 529.7 256 512C256 494.3 241.7 480 224 480L160 480C142.3 480 128 465.7 128 448L128 192C128 174.3 142.3 160 160 160L224 160z"/></svg>
+        Logout
+      </button>
+    </div>
+  </div>
+
+  <!-- open sidebar button (somir quando menu ativo) -->
+  <button class="iconbtn sidebar-toggle" id="openSidebar" title="Menu" style="position:fixed; left:10px; top:10px; z-index:70">
+    <svg viewBox="0 0 24 24"><path fill="#fff" d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+  </button>
+
+  <!-- header -->
+  <header>
+  <div class="header-center">
+    <img src="/static/LOGO-2.png" alt="Logo 2">
+  </div>
+
+
+    <div class="top-actions">
+      <!-- Download report button -->
+      <div class="iconbtn" id="btnDownloadReport" title="Download do Relatório">
+        <svg viewBox="0 0 640 640"><path fill="#fff" d="M128.5 64C93.2 64 64.5 92.7 64.5 128L64.5 512C64.5 547.3 93.2 576 128.5 576L384.5 576C419.8 576 448.5 547.3 448.5 512L448.5 416L526.6 416L495.6 447C486.2 456.4 486.2 471.6 495.6 480.9C505 490.2 520.2 490.3 529.5 480.9L601.5 408.9C610.9 399.5 610.9 384.3 601.5 375L529.5 303C520.1 293.6 504.9 293.6 495.6 303C486.3 312.4 486.2 327.6 495.6 336.9L526.6 367.9L448.5 367.9L448.5 234.4C448.5 217.4 441.8 201.1 429.8 189.1L323.2 82.7C311.2 70.7 295 64 278 64L128.5 64zM390 240L296.5 240C283.2 240 272.5 229.3 272.5 216L272.5 122.5L390 240zM256.5 392C256.5 378.7 267.2 368 280.5 368L384.5 368L384.5 416L280.5 416C267.2 416 256.5 405.3 256.5 392z"/></svg>
+      </div>
+
+      <!-- dark mode -->
+      <div class="iconbtn" id="btnDark" title="Modo escuro">
+        <svg viewBox="0 0 640 640"><path fill="#fff" d="M320 64C178.6 64 64 178.6 64 320C64 461.4 178.6 576 320 576C388.8 576 451.3 548.8 497.3 504.6C504.6 497.6 506.7 486.7 502.6 477.5C498.5 468.3 488.9 462.6 478.8 463.4C473.9 463.8 469 464 464 464C362.4 464 280 381.6 280 280C280 207.9 321.5 145.4 382.1 115.2C391.2 110.7 396.4 100.9 395.2 90.8C394 80.7 386.6 72.5 376.7 70.3C358.4 66.2 339.4 64 320 64z"/></svg>
+      </div>
+
+      <!-- user dropdown -->
+      <div style="position:relative">
+        <div class="iconbtn" id="btnUser" title="Usuário">
+          <svg viewBox="0 0 640 640"><path fill="#fff" d="M320 312C386.3 312 440 258.3 440 192C440 125.7 386.3 72 320 72C253.7 72 200 125.7 200 192C200 258.3 253.7 312 320 312zM290.3 368C191.8 368 112 447.8 112 546.3C112 562.7 125.3 576 141.7 576L498.3 576C514.7 576 528 562.7 528 546.3C528 447.8 448.2 368 349.7 368L290.3 368z"/></svg>
+        </div>
+        <div class="dropdown" id="userDrop" style="right:0; top:50px">
+          <div class="drop-item">Usuário: <strong style="color:var(--green)">admin</strong></div>
+          <div class="drop-item link" id="openSettings">
+            <svg width="14" height="14" viewBox="0 0 640 640" style="vertical-align:middle; margin-right:8px"><path d="M259.1 73.5C262.1 58.7 275.2 48 290.4 48L350.2 48C365.4 48 378.5 58.7 381.5 73.5L396 143.5C410.1 149.5 423.3 157.2 435.3 166.3L503.1 143.8C517.5 139 533.3 145 540.9 158.2L570.8 210C578.4 223.2 575.7 239.8 564.3 249.9L511 297.3C511.9 304.7 512.3 312.3 512.3 320C512.3 327.7 511.8 335.3 511 342.7L564.4 390.2C575.8 400.3 578.4 417 570.9 430.1L541 481.9C533.4 495 517.6 501.1 503.2 496.3L435.4 473.8C423.3 482.9 410.1 490.5 396.1 496.6L381.7 566.5C378.6 581.4 365.5 592 350.4 592L290.6 592C275.4 592 262.3 581.3 259.3 566.5L244.9 496.6C230.8 490.6 217.7 482.9 205.6 473.8L137.5 496.3C123.1 501.1 107.3 495.1 99.7 481.9L69.8 430.1C62.2 416.9 64.9 400.3 76.3 390.2L129.7 342.7C128.8 335.3 128.4 327.7 128.4 320C128.4 312.3 128.9 304.7 129.7 297.3L76.3 249.8C64.9 239.7 62.3 223 69.8 209.9L99.7 158.1C107.3 144.9 123.1 138.9 137.5 143.7L205.3 166.2C217.4 157.1 230.6 149.5 244.6 143.4L259.1 73.5z"/></svg>
+            Configurações
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="kpis">
+      <div class="kpi"><div class="n" id="kpiTotal">0</div><div class="lbl">Total</div></div>
+      <div class="kpi"><div class="n" id="kpiOn">0</div><div class="lbl">Online</div></div>
+      <div class="kpi"><div class="n" id="kpiOff">0</div><div class="lbl">Offline</div></div>
+    </div>
+
+    <div style="text-align:center;color:var(--muted);font-size:12px; margin-bottom:10px">
+      Última alteração: <span id="ts">--:--:--</span>
+    </div>
+
+    <div class="toolbar">
+      <input id="search" class="search" placeholder="Buscar impressoras...">
+      <button class="btn active" data-filter="all">Todas</button>
+      <button class="btn" data-filter="online">Somente Online</button>
+      <button class="btn" data-filter="offline">Somente Offline</button>
+    </div>
+
+    <div class="grid-wrapper" style="margin-top:6px">
+      <!-- loading apenas sobre a grid -->
+      <div id="gridLoading" class="grid-loading">
+        <div class="inner">
+          <div class="spinner"><svg viewBox="0 0 640 640"><path d="M272 112C272 85.5 293.5 64 320 64C346.5 64 368 85.5 368 112C368 138.5 346.5 160 320 160C293.5 160 272 138.5 272 112zM272 528C272 501.5 293.5 480 320 480C346.5 480 368 501.5 368 528C368 554.5 346.5 576 320 576C293.5 576 272 554.5 272 528zM112 272C138.5 272 160 293.5 160 320C160 346.5 138.5 368 112 368C85.5 368 64 346.5 64 320C64 293.5 85.5 272 112 272zM480 320C480 293.5 501.5 272 528 272C554.5 272 576 293.5 576 320C576 346.5 554.5 368 528 368C501.5 368 480 346.5 480 320zM139 433.1C157.8 414.3 188.1 414.3 206.9 433.1C225.7 451.9 225.7 482.2 206.9 501C188.1 519.8 157.8 519.8 139 501C120.2 482.2 120.2 451.9 139 433.1zM139 139C157.8 120.2 188.1 120.2 206.9 139C225.7 157.8 225.7 188.1 206.9 206.9C188.1 225.7 157.8 225.7 139 206.9C120.2 188.1 120.2 157.8 139 139zM501 433.1C519.8 451.9 519.8 482.2 501 501C482.2 519.8 451.9 519.8 433.1 501C414.3 482.2 414.3 451.9 433.1 433.1C451.9 414.3 482.2 519.8 501 501z"/></svg></div>
+          <div id="gridMsg" class="msg"></div>
+        </div>
+      </div>
+
+      <div id="grid" class="grid"></div>
+    </div>
+  </main>
+
+  <!-- HISTORICO MODAL -->
+  <div class="modal-back" id="histBack">
+    <div class="modal">
+      <div class="hd">Histórico da Impressora</div>
+      <div class="bd" id="histBody"></div>
+      <div class="ft">
+        <button class="btn" id="btnDLHist">Download</button>
+        <button class="btn btn-green" id="closeHist">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- CONFIGS (admin) -->
+  <div class="modal-back" id="cfgBack">
+    <div class="modal" style="width:min(880px,94vw)">
+      <div class="hd" style="display:flex;justify-content:space-between;align-items:center">
+        <span>Configurações (Admin)</span>
+        <span class="small">CRUD rápido (memória)</span>
+      </div>
+      <div class="bd">
+        <h4>Impressoras monitoradas</h4>
+        <table class="table" id="tblCfg" style="width:100%; border-collapse:separate; border-spacing:0 8px">
+          <thead><tr><th>Nome</th><th>IP</th><th>Bloco</th><th>Setor</th><th>Selb</th><th>Ações</th></tr></thead>
+          <tbody></tbody>
+        </table>
+
+        <h4>Adicionar impressora</h4>
+        <div style="display:grid;grid-template-columns:1.6fr 1fr .6fr .8fr .8fr auto; gap:8px">
+          <input id="addNome" class="search" placeholder="Nome completo (ZEBRA - X - Setor (Selb))">
+          <input id="addIP" class="search" placeholder="IP">
+          <input id="addBloco" class="search" placeholder="Bloco">
+          <input id="addSetor" class="search" placeholder="Setor">
+          <input id="addSelb" class="search" placeholder="Selb">
+          <button class="btn btn-green" id="btnAdd">Adicionar</button>
+        </div>
+      </div>
+      <div class="ft"><button class="btn btn-green" id="closeCfg">Fechar</button></div>
+    </div>
+  </div>
+
+  <footer>Desenvolvido por: <strong>Renildo Junior</strong></footer>
+
+<script>
+  // impressoras injetadas pelo Flask
+  const impressoras = JSON.parse('{{ impressoras|tojson|safe }}' || '[]');
+  const socket = io();
+  const grid = document.getElementById('grid');
+  const gridLoading = document.getElementById('gridLoading');
+  const gridMsg = document.getElementById('gridMsg');
+  const kpiTotal = document.getElementById('kpiTotal');
+  const kpiOn = document.getElementById('kpiOn');
+  const kpiOff = document.getElementById('kpiOff');
+  const tsElem = document.getElementById('ts');
+  const search = document.getElementById('search');
+  const toolbarBtns = [...document.querySelectorAll('.toolbar .btn')];
+
+  const openSidebarBtn = document.getElementById('openSidebar');
+  const sidebar = document.getElementById('sidebar');
+
+  let statusAtual = {}; // {nome: {status,aviso}}
+  let filtro = 'all';
+  let blocoFiltro = '*';
+  let alertaFiltro = false;
+
+  function iconSrc(){
+    return document.documentElement.classList.contains('dark')
+      ? '/static/animal_branco.png'
+      : '/static/animal_13157685.png';
+  }
+
+  // helpers loading msgs (animações pedidas #6 #7)
+  function showLoading(msg=''){
+    if(!gridLoading) return;
+    gridMsg.textContent = msg || '';
+    gridLoading.style.display = 'grid';
+  }
+  function hideLoading(){
+    if(!gridLoading) return;
+    gridMsg.textContent = '';
+    gridLoading.style.display = 'none';
+  }
+
+  // render grid cards and attach click-on-name handler
+  function renderGrid(){
+    grid.innerHTML = '';
+    for(const p of impressoras){
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.setAttribute('data-nome', p.nome);
+      card.setAttribute('data-bloco', (p.bloco||'').toString().trim());
+      card.innerHTML = `
+        <img class="zebra" src="${iconSrc()}" alt="Zebra">
+        <div class="status"><span class="small">Status:</span> <span class="onoff">${ (statusAtual[p.nome] ? statusAtual[p.nome].status : '...') }</span></div>
+        <div class="name">${p.nome}</div>
+        <div class="aviso small">${ (statusAtual[p.nome] ? statusAtual[p.nome].aviso : '') }</div>
+        <div class="contador small">Contador:<b class="contador-val"> ${(statusAtual[p.nome] ? statusAtual[p.nome].contador || '--' : '--')}</b></div>
+        <div class="muted small">${p.ip || ''}</div>
+      `;
+      grid.appendChild(card);
+
+      // click on name opens history
+      const nameEl = card.querySelector('.name');
+      nameEl.style.cursor = 'pointer';
+      nameEl.addEventListener('click', ()=> abrirHistorico(p.nome) );
+    }
+    applyFilters();
+  }
+
+  // update KPIs colors and values
+  function updateKpis(){
+    const total = impressoras.length;
+    let on = 0, off = 0;
+    for(const n in statusAtual){
+      if(statusAtual[n].status === 'Online') on++; else off++;
+    }
+    kpiTotal.textContent = total;
+    kpiOn.textContent = on;
+    kpiOff.textContent = off;
+    // coloring
+    kpiOn.style.color = on > 0 ? 'var(--green)' : 'var(--muted)';
+    kpiOff.style.color = off > 0 ? 'var(--red)' : 'var(--muted)';
+  }
+
+  // apply filters (busca + online/offline + bloco + alertas)
+  function applyFilters(){
+    const q = search.value.toLowerCase().trim();
+    const whitelistAlertas = new Set(['AVISO FITA INSTAL.', 'WARNING RIBBON IN']);
+    document.querySelectorAll('.card').forEach(c=>{
+      const nome = (c.dataset.nome || '');
+      const nomeLower = nome.toLowerCase();
+      const bloco = (c.dataset.bloco || '').toString().trim();
+      const st = (statusAtual[nome] || {}).status || '';
+      const aviso = ((statusAtual[nome] || {}).aviso || '').toUpperCase();
+
+      let ok = true;
+      if(q && !nomeLower.includes(q)) ok = false;
+      if(filtro === 'online' && st !== 'Online') ok = false;
+      if(filtro === 'offline' && st !== 'Offline') ok = false;
+      if(blocoFiltro !== '*' && bloco !== blocoFiltro) ok = false;
+      if(alertaFiltro && !whitelistAlertas.has(aviso)) ok = false;
+
+      c.style.display = ok ? '' : 'none';
+    });
+  }
+
+  // toolbar buttons behavior (with color states)
+  toolbarBtns.forEach(b=>{
+    b.addEventListener('click', ()=>{
+      toolbarBtns.forEach(x => { x.classList.remove('active','active-offline','active-online'); });
+      const f = b.dataset.filter;
+      filtro = f;
+      if(f === 'offline') b.classList.add('active-offline');
+      else if(f === 'online') b.classList.add('active-online');
+      else b.classList.add('active');
+      applyFilters();
+    });
+  });
+  search.addEventListener('input', applyFilters);
+
+  // HISTORICO modal
+  const histBack = document.getElementById('histBack');
+  const histBody = document.getElementById('histBody');
+  const closeHistBtn = document.getElementById('closeHist');
+  const btnDLHist = document.getElementById('btnDLHist');
+  let histTarget = null;
+
+  async function abrirHistorico(name){
+    histTarget = name;
+    histBody.innerHTML = '<div class="small">Carregando histórico...</div>';
+    histBack.style.display = 'flex';
+    try{
+      const r = await fetch('/historico/' + encodeURIComponent(name));
+      if(!r.ok) throw new Error('HTTP ' + r.status);
+      const data = await r.json();
+      if(!data || data.length === 0){
+        histBody.innerHTML = '<div class="small">Sem registros.</div>';
+      }else{
+        const items = data.slice().reverse().map(i => `<li><b>${i.hora}</b> - ${i.status} (${i.aviso})</li>`).join('');
+        histBody.innerHTML = `<ul class="small">${items}</ul>`;
+      }
+    }catch(e){
+      histBody.innerHTML = '<div class="small">Erro ao carregar histórico.</div>';
+      console.error(e);
+    }
+  }
+  closeHistBtn.addEventListener('click', ()=> histBack.style.display = 'none');
+  btnDLHist.addEventListener('click', ()=>{
+    if(!histTarget) return;
+    window.location.href = '/download/historico_txt/' + encodeURIComponent(histTarget);
+  });
+
+  // Sidebar interactions (corrige #1: esconder "=" quando ativo)
+  document.getElementById('openSidebar').addEventListener('click', ()=>{
+    sidebar.classList.add('show');
+    openSidebarBtn.style.display = 'none';
+  });
+  document.getElementById("btnLogout").addEventListener("click", function() {
+    window.location.href = "/logout";
+});
+  document.getElementById('closeSidebar').addEventListener('click', ()=>{
+    sidebar.classList.remove('show');
+    openSidebarBtn.style.display = '';
+  });
+
+  // build list of blocos dynamically (numbers)
+  const blocos = [...new Set(impressoras.map(p => (p.bloco||'').toString().trim()).filter(x=>x))].sort((a,b)=> (parseInt(a)||0)-(parseInt(b)||0));
+  const listaBlocos = document.getElementById('listaBlocos');
+  listaBlocos.innerHTML = blocos.map(b => `<button class="side-item" data-b="${b}">Bloco ${b}</button>`).join('') + `<button class="side-item" data-b="*">Todas</button>`;
+  document.getElementById('btnBlocos').addEventListener('click', ()=> listaBlocos.classList.toggle('show'));
+  listaBlocos.addEventListener('click', (ev)=>{
+    const btn = ev.target.closest('.side-item');
+    if(!btn) return;
+    blocoFiltro = btn.dataset.b || '*';   // mantém regra combinada (#3)
+    alertaFiltro = false;                 // se escolher bloco após alertas, mantém filtro? você pediu manter regra do botão selecionado; o botão aqui é online/offline, então preservado; alertas é um atalho separado
+    applyFilters();
+    sidebar.classList.remove('show');
+    openSidebarBtn.style.display = '';
+  });
+
+  // alertas: ativa modo de alerta dedicado (#2) + mantém filtros combinados
+  document.getElementById('btnAlertas').addEventListener('click', async ()=>{
+    alertaFiltro = true;
+    blocoFiltro = blocoFiltro || '*';
+    applyFilters();
+    sidebar.classList.remove('show');
+    openSidebarBtn.style.display = '';
+  });
+
+  // logout demo
+  document.getElementById('btnLogout').addEventListener('click', ()=> alert('Logout demo (nenhuma ação).'));
+
+  // user dropdown e config modal (corrige #5: botões só aparecem ao clicar)
+  const btnUser = document.getElementById('btnUser'), userDrop = document.getElementById('userDrop');
+  btnUser.addEventListener('click', (e)=>{ e.stopPropagation(); userDrop.classList.toggle('show'); });
+  document.addEventListener('click', (e)=> { if(!userDrop.contains(e.target) && !btnUser.contains(e.target)) userDrop.classList.remove('show'); });
+
+  // configs modal
+  const cfgBack = document.getElementById('cfgBack');
+  document.getElementById('openSettings').addEventListener('click', ()=>{ userDrop.classList.remove('show'); montarTabelaCfg(); cfgBack.style.display = 'flex'; });
+  document.getElementById('closeCfg').addEventListener('click', ()=> cfgBack.style.display = 'none');
+
+  function montarTabelaCfg(){
+    const tbody = document.querySelector('#tblCfg tbody');
+    tbody.innerHTML = impressoras.map(p => `
+      <tr>
+        <td>${p.nome}</td>
+        <td>${p.ip||''}</td>
+        <td>${p.bloco||''}</td>
+        <td>${p.setor||''}</td>
+        <td>${p.selb||''}</td>
+        <td style="display:flex; gap:6px">
+          <button class="btn btn-red" onclick="excluirImpressora('${encodeURIComponent(p.nome)}')">Excluir</button>
+        </td>
+      </tr>`).join('');
+  }
+
+
+  window.excluirImpressora = async function(nomeEnc){
+    const nome = decodeURIComponent(nomeEnc);
+    if(!confirm('Excluir "'+nome+'"?')) return;
+    showLoading('Excluindo impressora...');
+    try{
+      const r = await fetch('/delete_printer', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name:nome})});
+      const j = await r.json();
+      if(j.ok){
+        const idx = impressoras.findIndex(x => x.nome === nome);
+        if(idx>=0) impressoras.splice(idx,1);
+        delete statusAtual[nome];
+        montarTabelaCfg(); renderGrid(); updateKpis(); applyFilters();
+        alert('Excluída');
+      }else alert('Falha ao excluir');
+    }catch(e){
+      alert('Erro ao excluir'); console.error(e);
+    }finally{
+      hideLoading();
+    }
+  };
+
+  // add new printer from config (com animação #6)
+  document.getElementById('btnAdd').addEventListener('click', async ()=>{
+    const nome = document.getElementById('addNome').value.trim();
+    const ip = document.getElementById('addIP').value.trim();
+    const bloco = document.getElementById('addBloco').value.trim();
+    const setor = document.getElementById('addSetor').value.trim();
+    const selb = document.getElementById('addSelb').value.trim();
+    if(!nome || !ip){ alert('Preencha nome e IP'); return; }
+    showLoading('Adicionando impressora...');
+    try{
+      const r = await fetch('/add_printer', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name:nome, ip, bloco, setor, selb})});
+      const j = await r.json();
+      if(j.ok){
+        impressoras.push({nome, ip, bloco, setor, selb});
+        montarTabelaCfg(); renderGrid(); updateKpis(); applyFilters();
+        alert('Adicionada');
+      }else alert('Falha');
+    }catch(e){ alert('Erro ao adicionar'); console.error(e); }
+    finally{ hideLoading(); }
+  });
+
+  // coleta nomes visíveis na grade (para o relatório #7)
+  function getVisiblePrinterNames(){
+    const arr = [];
+    document.querySelectorAll('.card').forEach(c=>{
+      if(c.style.display !== 'none'){
+        arr.push(c.dataset.nome);
+      }
+    });
+    return arr;
+  }
+
+  // download report button (header) – agora respeita filtros e mostra animação (#7)
+  document.getElementById('btnDownloadReport').addEventListener('click', async ()=>{
+    showLoading('Gerando Relatório...');
+    try{
+      const nomes = getVisiblePrinterNames();
+      const res = await fetch('/download/relatorio', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({nomes})
+      });
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'relatorio_impressoras.xlsx'; document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    }catch(e){ alert('Falha ao gerar relatório'); console.error(e); }
+    finally{ hideLoading(); }
+  });
+
+  // dark mode (borda verde + troca ícone #8)
+  document.getElementById('btnDark').addEventListener('click', ()=>{
+    document.documentElement.classList.toggle('dark');
+    // atualiza ícones exibidos
+    document.querySelectorAll('img.zebra').forEach(img => { img.src = iconSrc(); });
+  });
+
+  // socket updates
+  socket.on('atualizar_status', (data)=>{
+    // data: {nome: {status,aviso}, ...}
+    Object.keys(data).forEach(k => { statusAtual[k] = data[k]; });
+
+    // regra: impedir Online com aviso "SEM CONEXÃO"
+    Object.keys(statusAtual).forEach(n => {
+      if(statusAtual[n].status === 'Online' && (statusAtual[n].aviso === 'SEM CONEXÃO' || !statusAtual[n].aviso)) {
+        statusAtual[n].aviso = 'OPERANDO';
+      }
+    });
+
+    // atualiza cards
+    document.querySelectorAll('.card').forEach(c=>{
+      const n = c.dataset.nome;
+      const s = statusAtual[n];
+      if(!s) return;
+      const onoff = c.querySelector('.onoff');
+      onoff.textContent = s.status;
+      onoff.className = 'onoff ' + (s.status === 'Online' ? 'on' : 'off');
+      const avisoEl = c.querySelector('.aviso');
+      avisoEl.textContent = s.aviso || '';
+      // aviso color: OPERANDO verde, outros em vermelho
+      avisoEl.style.color = (s.aviso && s.aviso.toUpperCase() === 'OPERANDO') ? 'var(--green)' : 'var(--red)';
+    });
+
+    updateKpis();
+    tsElem.textContent = new Date().toLocaleTimeString();
+
+    // hide grid-loading on first update
+    if(gridLoading) gridLoading.style.display = 'none';
+    applyFilters();
+  });
+
+  // fallback fetch status once if socket slow
+  setTimeout(async ()=>{
+    if(Object.keys(statusAtual).length === 0){
+      try{
+        const r = await fetch('/status'); const st = await r.json();
+        Object.assign(statusAtual, st);
+        socket.emit('ack');
+        Object.keys(statusAtual).forEach(n => {
+          if(statusAtual[n].status === 'Online' && (statusAtual[n].aviso === 'SEM CONEXÃO' || !statusAtual[n].aviso)) {
+            statusAtual[n].aviso = 'OPERANDO';
+          }
+        });
+        renderGrid();
+        document.querySelectorAll('.card').forEach(c=>{
+          const n = c.dataset.nome;
+          const s = statusAtual[n];
+          if(!s) return;
+          const onoff = c.querySelector('.onoff'); onoff.textContent = s.status; onoff.className = 'onoff ' + (s.status === 'Online' ? 'on' : 'off');
+          const avisoEl = c.querySelector('.aviso'); avisoEl.textContent = s.aviso || ''; avisoEl.style.color = (s.aviso && s.aviso.toUpperCase() === 'OPERANDO') ? 'var(--green)' : 'var(--red)';
+        });
+        updateKpis();
+        
+         const contadorEl = c.querySelector('.contador-val');
+  if(contadorEl){
+      contadorEl.textContent = s.contador || '--';
+  }
+        
+      }catch(e){ console.warn('fallback status failed', e); }
+      finally{ if(gridLoading) gridLoading.style.display = 'none'; }
+    }
+  }, 2200);
+
+  // initial render
+  renderGrid();
+  updateKpis();
+
+  document.addEventListener('DOMContentLoaded', () => {
+  showLoading('Carregando impressoras...');
+
+  // Renderiza impressoras iniciais
+  renderImpressoras(impressoras);
+
+  // Depois de renderizar, esconde loading
+  hideLoading();
+});
+
+socket.on('connect', () => {
+  showLoading('Carregando impressoras...');
+});
+
+socket.on('atualizar_status', (data) => {
+  statusAtual = data;
+  updateKpisAndGrid(); // função que você já usa para atualizar cards
+  hideLoading();
+});
+
+</script>
+</body>
+</html>

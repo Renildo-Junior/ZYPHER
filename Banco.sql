@@ -1,0 +1,2 @@
+CREATE DATABASE monitor_impressoras;
+USE monitor_impressoras;
